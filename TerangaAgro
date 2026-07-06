@@ -1,116 +1,561 @@
-import 'package:flutter/material.dart';
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TerangaAgro — Le marché direct producteur → client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand: #E8DFC7;
+    --sand-deep: #DED1AE;
+    --clay: #A8461F;
+    --clay-deep: #8A3818;
+    --leaf: #33513A;
+    --leaf-deep: #22362A;
+    --gold: #C9963B;
+    --ink: #241C15;
+    --card: #FBF6EA;
+    --line: rgba(36,28,21,0.14);
+    --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--sand);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3, .display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 28px; }
+  header.site{
+    position:sticky; top:0; z-index:40;
+    background:rgba(232,223,199,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--clay);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--sand); font-family:'Fraunces',serif; font-weight:700; font-size:16px;
+  }
+  .brand-name{ font-family:'Fraunces',serif; font-weight:700; font-size:20px; }
+  .brand-name em{ font-style:normal; color:var(--clay); }
+  nav.links{ display:flex; gap:28px; font-size:14.5px; font-weight:500; }
+  nav.links a{ text-decoration:none; opacity:0.8; transition:opacity .15s; }
+  nav.links a:hover{ opacity:1; }
+  .nav-actions{ display:flex; align-items:center; gap:14px; }
+  #userChip{ font-size:14px; font-weight:500; display:none; align-items:center; gap:8px; }
+  #userChip button{ background:none;border:none;color:var(--clay); text-decoration:underline; cursor:pointer; font-family:inherit; font-size:13px; padding:0;}
+  .btn{
+    border:none; cursor:pointer; font-family:'Work Sans',sans-serif; font-weight:600;
+    font-size:14px; padding:11px 20px; border-radius:var(--radius);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--clay); color:var(--sand); }
+  .btn-primary:hover{ background:var(--clay-deep); }
+  .btn-ghost{ background:transparent; border:1.5px solid var(--ink); color:var(--ink); }
+  .btn-ghost:hover{ background:var(--ink); color:var(--sand); }
+  .btn-cart{ background:var(--leaf); color:var(--sand); position:relative; }
+  .btn-cart:hover{ background:var(--leaf-deep); }
+  #cartCount{
+    position:absolute; top:-7px; right:-7px; background:var(--gold); color:var(--ink);
+    font-size:11px; font-weight:700; width:19px;height:19px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hero{ padding:76px 0 60px; position:relative; overflow:hidden; }
+  .hero-grid{ display:grid; grid-template-columns:1.15fr 0.85fr; gap:56px; align-items:center; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.06em;
+    text-transform:uppercase; color:var(--leaf-deep); margin-bottom:18px;
+  }
+  .eyebrow::before{ content:''; width:22px; height:1.5px; background:var(--clay); display:inline-block; }
+  .hero h1{ font-size:clamp(38px, 5.4vw, 62px); line-height:1.03; }
+  .hero h1 .accent{ color:var(--clay); font-style:italic; font-weight:500; }
+  .hero p.lede{ font-size:18px; max-width:480px; margin:22px 0 30px; opacity:0.85; }
+  .hero-ctas{ display:flex; gap:14px; }
+  .hero-visual{
+    position:relative; background:var(--card); border:1px solid var(--line);
+    border-radius:6px; padding:26px; min-height:340px;
+  }
+  .stat-row{ display:flex; gap:0; border-top:1px solid var(--line); margin-top:20px; padding-top:18px; }
+  .stat{ flex:1; }
+  .stat + .stat{ border-left:1px solid var(--line); padding-left:18px; margin-left:18px; }
+  .stat b{ font-family:'Fraunces',serif; font-size:26px; display:block; }
+  .stat span{ font-size:12.5px; opacity:0.7; }
+  .ribbon{
+    position:absolute; top:22px; right:-34px; background:var(--gold); color:var(--ink);
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500;
+    padding:5px 40px; transform:rotate(35deg); letter-spacing:0.04em;
+  }
+  section{ padding:64px 0; }
+  .section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:34px; gap:20px; flex-wrap:wrap; }
+  .section-head h2{ font-size:32px; }
+  .section-head p{ max-width:420px; opacity:0.75; font-size:15px; margin:8px 0 0; }
+  .filters{ display:flex; gap:10px; margin-bottom:28px; flex-wrap:wrap; }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; padding:7px 14px;
+    border:1px solid var(--line); border-radius:20px; cursor:pointer; background:transparent;
+    transition:all .15s;
+  }
+  .chip.active, .chip:hover{ background:var(--ink); color:var(--sand); border-color:var(--ink); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:22px; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:6px; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .card-media{
+    height:150px; display:flex; align-items:center; justify-content:center; font-size:52px;
+    background:linear-gradient(135deg, var(--sand-deep), var(--sand));
+    position:relative;
+  }
+  .card-tag{
+    position:absolute; top:10px; left:10px; background:var(--leaf); color:var(--sand);
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:3px 8px; border-radius:3px;
+  }
+  .card-body{ padding:18px; display:flex; flex-direction:column; gap:10px; flex:1; }
+  .card-body h3{ font-size:18px; }
+  .card-body .origin{ font-size:12.5px; opacity:0.65; margin-top:-6px; }
+  .card-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:6px; }
+  .price{ font-family:'JetBrains Mono',monospace; font-weight:500; font-size:16px; color:var(--clay-deep); }
+  .price span{ font-size:11.5px; opacity:0.6; }
+  .add-btn{
+    background:var(--ink); color:var(--sand); border:none; width:34px;height:34px;border-radius:50%;
+    font-size:18px; cursor:pointer; line-height:1;
+  }
+  .add-btn:hover{ background:var(--clay); }
+  .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+  .step{ border-top:2px solid var(--ink); padding-top:16px; }
+  .step .num{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--clay); }
+  .step h3{ font-size:20px; margin:8px 0 8px; }
+  .step p{ font-size:14.5px; opacity:0.78; margin:0; }
+  .signup-panel{
+    background:var(--leaf-deep); color:var(--sand); border-radius:8px; padding:52px;
+    display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;
+  }
+  .signup-panel h2{ color:var(--sand); font-size:30px; }
+  .signup-panel p{ opacity:0.8; margin-top:12px; font-size:15px; }
+  .form-row{ margin-bottom:14px; }
+  .form-row label{ display:block; font-size:12.5px; margin-bottom:6px; opacity:0.85; font-family:'JetBrains Mono',monospace;}
+  .form-row input, .form-row select{
+    width:100%; padding:11px 12px; border-radius:4px; border:1px solid rgba(255,255,255,0.25);
+    background:rgba(255,255,255,0.08); color:var(--sand); font-family:'Work Sans',sans-serif; font-size:14px;
+  }
+  .form-row input::placeholder{ color:rgba(255,255,255,0.45); }
+  .toggle-row{ font-size:13px; margin-top:14px; opacity:0.85; }
+  .toggle-row button{ background:none;border:none;color:var(--gold);text-decoration:underline;cursor:pointer;font-family:inherit;font-size:13px;padding:0;}
+  #authMsg{ font-size:13px; margin-top:10px; min-height:18px; }
+  #authMsg.err{ color:#F2A15C; }
+  #authMsg.ok{ color:#9FCF8E; }
+  footer{ padding:40px 0 60px; border-top:1px solid var(--line); }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+  footer small{ opacity:0.6; font-size:12.5px; }
+  .overlay{ position:fixed; inset:0; background:rgba(36,28,21,0.45); display:none; z-index:60; }
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:400px; max-width:92vw;
+    background:var(--card); z-index:70; transform:translateX(100%); transition:transform .25s ease;
+    display:flex; flex-direction:column;
+  }
+  .drawer.open{ transform:translateX(0); }
+  .overlay.open{ display:block; }
+  .drawer-head{ padding:22px 24px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .drawer-head button{ background:none;border:none;font-size:20px;cursor:pointer; }
+  .drawer-items{ flex:1; overflow-y:auto; padding:18px 24px; }
+  .cart-line{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .cart-line .qty-ctl{ display:flex; align-items:center; gap:8px; }
+  .cart-line .qty-ctl button{ width:22px;height:22px;border:1px solid var(--line);background:none;border-radius:50%;cursor:pointer; }
+  .drawer-foot{ padding:22px 24px; border-top:1px solid var(--line); }
+  .drawer-foot .total{ display:flex; justify-content:space-between; font-family:'Fraunces',serif; font-size:20px; margin-bottom:16px; }
+  .empty-note{ opacity:0.6; font-size:14px; text-align:center; margin-top:40px; }
+  @media (max-width: 860px){
+    .hero-grid, .signup-panel, .steps{ grid-template-columns:1fr; }
+    nav.links{ display:none; }
+    .foot-row{ flex-direction:column; align-items:flex-start; }
+  }
+  :focus-visible{ outline:2px solid var(--clay); outline-offset:2px; }
+</style>
+</head>
+<body>
 
-void main() {
-  runApp(const MyApp());
-}
+<header class="site">
+  <div class="wrap nav">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div class="brand-name">Teranga<em>Agro</em></div>
+    </div>
+    <nav class="links">
+      <a href="#produits">Produits</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="#compte">Mon compte</a>
+    </nav>
+    <div class="nav-actions">
+      <span id="userChip">👤 <span id="userEmail"></span> · <button onclick="logout()">Déconnexion</button></span>
+      <button class="btn btn-ghost" id="accountBtn" onclick="scrollToSignup()">Se connecter</button>
+      <button class="btn btn-cart" onclick="openCart()">Panier <span id="cartCount">0</span></button>
+    </div>
+  </div>
+</header>
 
-/// Widget racine de l'application.
-/// Gère le ThemeMode (clair / sombre / système) et le propage
-/// à tout l'arbre de widgets via un simple StatefulWidget.
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Récolté au Sénégal</div>
+      <h1>Le champ chez vous,<br><span class="accent">sans détour.</span></h1>
+      <p class="lede">TerangaAgro relie directement les producteurs sénégalais aux familles et commerces qui veulent des produits frais, à prix juste — mil, arachide, mangue, légumes de saison.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-primary" onclick="document.getElementById('produits').scrollIntoView({behavior:'smooth'})">Voir les produits</button>
+        <button class="btn btn-ghost" onclick="scrollToSignup()">Créer un compte</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="ribbon">Direct producteur</div>
+      <div class="eyebrow" style="margin-bottom:10px;">Cette semaine sur le marché</div>
+      <h3 style="font-size:22px;">3 régions, 1 seul panier</h3>
+      <p style="font-size:14.5px; opacity:0.8; margin-top:10px;">Thiès, Casamance et la vallée du fleuve Sénégal livrent leurs récoltes de la semaine directement sur la plateforme.</p>
+      <div class="stat-row">
+        <div class="stat"><b>128</b><span>producteurs actifs</span></div>
+        <div class="stat"><b>24</b><span>produits ce mois-ci</span></div>
+        <div class="stat"><b>3</b><span>régions couvertes</span></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
+<section id="produits">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Le marché de la semaine</h2>
+        <p>Chaque produit est ajouté par un producteur inscrit — la disponibilité change selon les récoltes.</p>
+      </div>
+    </div>
+    <div class="filters" id="filters">
+      <button class="chip active" data-cat="tous">Tous</button>
+      <button class="chip" data-cat="cereales">Céréales</button>
+      <button class="chip" data-cat="fruits">Fruits</button>
+      <button class="chip" data-cat="legumes">Légumes</button>
+      <button class="chip" data-cat="autres">Autres</button>
+    </div>
+    <div class="grid" id="productGrid"></div>
+  </div>
+</section>
 
-class _MyAppState extends State<MyApp> {
-  // Par défaut on suit le thème du système (clair ou sombre selon le téléphone)
-  ThemeMode _themeMode = ThemeMode.system;
+<section id="comment">
+  <div class="wrap">
+    <div class="section-head"><div><h2>Comment ça marche</h2></div></div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">01</div>
+        <h3>Créez votre compte</h3>
+        <p>Inscrivez-vous en tant que client pour passer commande, ou en tant que producteur pour vendre vos récoltes.</p>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <h3>Composez votre panier</h3>
+        <p>Choisissez parmi les produits disponibles cette semaine et ajustez les quantités.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <h3>Recevez votre commande</h3>
+        <p>Votre commande est enregistrée et transmise pour livraison ou retrait selon votre région.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  void _toggleTheme(bool activerSombre) {
-    setState(() {
-      _themeMode = activerSombre ? ThemeMode.dark : ThemeMode.light;
-    });
+<section id="compte">
+  <div class="wrap">
+    <div class="signup-panel" id="authPanel">
+      <div>
+        <h2 id="authTitle">Rejoindre TerangaAgro</h2>
+        <p>Créez votre compte client pour commander, suivre vos achats et retrouver vos producteurs favoris.</p>
+      </div>
+      <div>
+        <form id="authForm" onsubmit="handleAuth(event)">
+          <div class="form-row" id="nameRow">
+            <label>Nom complet</label>
+            <input type="text" id="fullName" placeholder="Aïcha Diop">
+          </div>
+          <div class="form-row">
+            <label>Adresse e-mail</label>
+            <input type="email" id="email" placeholder="vous@exemple.com" required>
+          </div>
+          <div class="form-row">
+            <label>Mot de passe</label>
+            <input type="password" id="password" placeholder="6 caractères minimum" required minlength="6">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;" id="authSubmitBtn">Créer mon compte</button>
+          <div id="authMsg"></div>
+          <div class="toggle-row">
+            <span id="toggleText">Déjà inscrit ?</span> <button type="button" onclick="toggleAuthMode()" id="toggleBtn">Se connecter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-row">
+    <div class="brand"><div class="brand-mark" style="width:26px;height:26px;font-size:13px;">T</div><span style="font-family:'Fraunces',serif;font-weight:600;">TerangaAgro</span></div>
+    <small>Plateforme communautaire reliant producteurs et clients — Sénégal.</small>
+  </div>
+</footer>
+
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3 style="font-family:'Fraunces',serif;">Votre panier</h3>
+    <button onclick="closeCart()">✕</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="total"><span>Total</span><span class="mono" id="cartTotal">0 FCFA</span></div>
+    <button class="btn btn-primary" style="width:100%;" onclick="checkout()">Valider la commande</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, doc, setDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "REMPLACER_apiKey",
+    authDomain: "REMPLACER_authDomain",
+    projectId: "REMPLACER_projectId",
+    storageBucket: "REMPLACER_storageBucket",
+    messagingSenderId: "REMPLACER_messagingSenderId",
+    appId: "REMPLACER_appId"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window._auth = auth;
+  window._db = db;
+  window._createUser = createUserWithEmailAndPassword;
+  window._signIn = signInWithEmailAndPassword;
+  window._signOut = signOut;
+  window._addDoc = addDoc;
+  window._collection = collection;
+  window._doc = doc;
+  window._setDoc = setDoc;
+  window._serverTimestamp = serverTimestamp;
+
+  onAuthStateChanged(auth, (user) => {
+    const chip = document.getElementById('userChip');
+    const accountBtn = document.getElementById('accountBtn');
+    if(user){
+      chip.style.display = 'inline-flex';
+      document.getElementById('userEmail').textContent = user.email;
+      accountBtn.style.display = 'none';
+    } else {
+      chip.style.display = 'none';
+      accountBtn.style.display = 'inline-block';
+    }
+  });
+</script>
+
+<script>
+  const PRODUCTS = [
+    {id:'p1', name:'Mil local', cat:'cereales', origin:'Kaolack', price:750, unit:'kg', emoji:'🌾', tag:'Récolté ce mois'},
+    {id:'p2', name:'Mangue Kent', cat:'fruits', origin:'Casamance', price:1200, unit:'kg', emoji:'🥭', tag:'Pleine saison'},
+    {id:'p3', name:'Arachide décortiquée', cat:'autres', origin:'Kaffrine', price:900, unit:'kg', emoji:'🥜', tag:'Best-seller'},
+    {id:'p4', name:'Bissap séché', cat:'autres', origin:'Fatick', price:500, unit:'sachet', emoji:'🌺', tag:null},
+    {id:'p5', name:'Tomates fraîches', cat:'legumes', origin:'Vallée du fleuve', price:400, unit:'kg', emoji:'🍅', tag:'Récolté cette semaine'},
+    {id:'p6', name:'Gombo frais', cat:'legumes', origin:'Thiès', price:600, unit:'kg', emoji:'🫛', tag:null},
+    {id:'p7', name:'Riz brisé local', cat:'cereales', origin:'Vallée du fleuve', price:650, unit:'kg', emoji:'🍚', tag:null},
+    {id:'p8', name:'Papaye', cat:'fruits', origin:'Casamance', price:800, unit:'unité', emoji:'🧡', tag:null},
+  ];
+
+  let currentFilter = 'tous';
+  let cart = {};
+
+  function renderProducts(){
+    const grid = document.getElementById('productGrid');
+    const items = PRODUCTS.filter(p => currentFilter === 'tous' || p.cat === currentFilter);
+    grid.innerHTML = items.map(p => `
+      <div class="card">
+        <div class="card-media">
+          ${p.tag ? `<span class="card-tag">${p.tag}</span>` : ''}
+          <span>${p.emoji}</span>
+        </div>
+        <div class="card-body">
+          <h3>${p.name}</h3>
+          <div class="origin">Origine — ${p.origin}</div>
+          <div class="card-foot">
+            <div class="price">${p.price} <span>FCFA / ${p.unit}</span></div>
+            <button class="add-btn" onclick="addToCart('${p.id}')">+</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Marché Agricole',
-      debugShowCheckedModeBanner: false,
-
-      // ---- Thème clair ----
-      theme: ThemeData(
-        brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-      ),
-
-      // ---- Thème sombre ----
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
-      ),
-
-      themeMode: _themeMode,
-
-      home: HomePage(
-        themeMode: _themeMode,
-        onToggleTheme: _toggleTheme,
-      ),
-    );
-  }
-}
-
-/// Page d'accueil simple avec un bouton pour activer/désactiver
-/// le mode sombre manuellement.
-class HomePage extends StatelessWidget {
-  final ThemeMode themeMode;
-  final ValueChanged<bool> onToggleTheme;
-
-  const HomePage({
-    super.key,
-    required this.themeMode,
-    required this.onToggleTheme,
+  document.getElementById('filters').addEventListener('click', (e) => {
+    if(e.target.classList.contains('chip')){
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      e.target.classList.add('active');
+      currentFilter = e.target.dataset.cat;
+      renderProducts();
+    }
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final estSombre = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Marché Agricole'),
-        actions: [
-          IconButton(
-            icon: Icon(estSombre ? Icons.light_mode : Icons.dark_mode),
-            tooltip: 'Basculer thème',
-            onPressed: () => onToggleTheme(!estSombre),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              estSombre ? 'Mode sombre activé' : 'Mode clair activé',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            Switch(
-              value: estSombre,
-              onChanged: onToggleTheme,
-            ),
-          ],
-        ),
-      ),
-    );
+  function addToCart(id){
+    cart[id] = (cart[id] || 0) + 1;
+    updateCartUI();
   }
-}
+  function changeQty(id, delta){
+    cart[id] = (cart[id] || 0) + delta;
+    if(cart[id] <= 0) delete cart[id];
+    updateCartUI();
+  }
+  function updateCartUI(){
+    const count = Object.values(cart).reduce((a,b)=>a+b,0);
+    document.getElementById('cartCount').textContent = count;
+    const itemsEl = document.getElementById('drawerItems');
+    const ids = Object.keys(cart);
+    if(ids.length === 0){
+      itemsEl.innerHTML = '<div class="empty-note">Votre panier est vide.<br>Ajoutez des produits depuis le marché.</div>';
+      document.getElementById('cartTotal').textContent = '0 FCFA';
+      return;
+    }
+    let total = 0;
+    itemsEl.innerHTML = ids.map(id => {
+      const p = PRODUCTS.find(x => x.id === id);
+      const lineTotal = p.price * cart[id];
+      total += lineTotal;
+      return `
+        <div class="cart-line">
+          <span>${p.emoji} ${p.name}</span>
+          <div class="qty-ctl">
+            <button onclick="changeQty('${id}',-1)">−</button>
+            <span class="mono">${cart[id]}</span>
+            <button onclick="changeQty('${id}',1)">+</button>
+          </div>
+          <span class="mono">${lineTotal} F</span>
+        </div>`;
+    }).join('');
+    document.getElementById('cartTotal').textContent = total + ' FCFA';
+  }
+
+  function openCart(){ document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+  function closeCart(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+  async function checkout(){
+    const user = window._auth.currentUser;
+    if(!user){
+      closeCart();
+      alert("Connectez-vous ou créez un compte pour valider votre commande.");
+      scrollToSignup();
+      return;
+    }
+    const ids = Object.keys(cart);
+    if(ids.length === 0) return;
+    const items = ids.map(id => {
+      const p = PRODUCTS.find(x => x.id === id);
+      return { productId: id, name: p.name, price: p.price, qty: cart[id] };
+    });
+    const total = items.reduce((sum, it) => sum + it.price * it.qty, 0);
+    try {
+      await window._addDoc(window._collection(window._db, "orders"), {
+        userId: user.uid,
+        userEmail: user.email,
+        items,
+        total,
+        createdAt: window._serverTimestamp()
+      });
+      cart = {};
+      updateCartUI();
+      closeCart();
+      alert("Commande enregistrée ! Merci pour votre confiance.");
+    } catch(err){
+      alert("Erreur lors de l'enregistrement de la commande : " + err.message);
+    }
+  }
+
+  let authMode = 'signup';
+
+  function scrollToSignup(){
+    document.getElementById('compte').scrollIntoView({behavior:'smooth'});
+  }
+
+  function toggleAuthMode(){
+    authMode = authMode === 'signup' ? 'login' : 'signup';
+    const isSignup = authMode === 'signup';
+    document.getElementById('authTitle').textContent = isSignup ? 'Rejoindre TerangaAgro' : 'Se connecter';
+    document.getElementById('nameRow').style.display = isSignup ? 'block' : 'none';
+    document.getElementById('authSubmitBtn').textContent = isSignup ? 'Créer mon compte' : 'Se connecter';
+    document.getElementById('toggleText').textContent = isSignup ? 'Déjà inscrit ?' : 'Pas encore de compte ?';
+    document.getElementById('toggleBtn').textContent = isSignup ? 'Se connecter' : 'Créer un compte';
+    document.getElementById('authMsg').textContent = '';
+  }
+
+  async function handleAuth(e){
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('authMsg');
+    msg.className = ''; msg.textContent = '';
+    try {
+      if(authMode === 'signup'){
+        const fullName = document.getElementById('fullName').value;
+        const cred = await window._createUser(window._auth, email, password);
+        await window._setDoc(window._doc(window._db, "users", cred.user.uid), {
+          fullName, email, role: "client", createdAt: window._serverTimestamp()
+        });
+        msg.className = 'ok'; msg.textContent = 'Compte créé avec succès ! Bienvenue.';
+      } else {
+        await window._signIn(window._auth, email, password);
+        msg.className = 'ok'; msg.textContent = 'Connexion réussie.';
+      }
+    } catch(err){
+      msg.className = 'err'; msg.textContent = translateAuthError(err.code);
+    }
+  }
+
+  function translateAuthError(code){
+    const map = {
+      'auth/email-already-in-use': "Cette adresse e-mail est déjà utilisée.",
+      'auth/invalid-email': "Adresse e-mail invalide.",
+      'auth/weak-password': "Mot de passe trop court (6 caractères minimum).",
+      'auth/user-not-found': "Aucun compte avec cette adresse e-mail.",
+      'auth/wrong-password': "Mot de passe incorrect.",
+      'auth/invalid-credential': "E-mail ou mot de passe incorrect.",
+    };
+    return map[code] || "Une erreur est survenue. Réessayez.";
+  }
+
+  async function logout(){
+    await window._signOut(window._auth);
+  }
+
+  renderProducts();
+  updateCartUI();
+</script>
+
+</body>
+</html>
