@@ -1,1 +1,116 @@
+import 'package:flutter/material.dart';
 
+void main() {
+  runApp(const MyApp());
+}
+
+/// Widget racine de l'application.
+/// Gère le ThemeMode (clair / sombre / système) et le propage
+/// à tout l'arbre de widgets via un simple StatefulWidget.
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // Par défaut on suit le thème du système (clair ou sombre selon le téléphone)
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void _toggleTheme(bool activerSombre) {
+    setState(() {
+      _themeMode = activerSombre ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Marché Agricole',
+      debugShowCheckedModeBanner: false,
+
+      // ---- Thème clair ----
+      theme: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+        ),
+      ),
+
+      // ---- Thème sombre ----
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+        ),
+      ),
+
+      themeMode: _themeMode,
+
+      home: HomePage(
+        themeMode: _themeMode,
+        onToggleTheme: _toggleTheme,
+      ),
+    );
+  }
+}
+
+/// Page d'accueil simple avec un bouton pour activer/désactiver
+/// le mode sombre manuellement.
+class HomePage extends StatelessWidget {
+  final ThemeMode themeMode;
+  final ValueChanged<bool> onToggleTheme;
+
+  const HomePage({
+    super.key,
+    required this.themeMode,
+    required this.onToggleTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final estSombre = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Marché Agricole'),
+        actions: [
+          IconButton(
+            icon: Icon(estSombre ? Icons.light_mode : Icons.dark_mode),
+            tooltip: 'Basculer thème',
+            onPressed: () => onToggleTheme(!estSombre),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              estSombre ? 'Mode sombre activé' : 'Mode clair activé',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            Switch(
+              value: estSombre,
+              onChanged: onToggleTheme,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
