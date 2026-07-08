@@ -1,0 +1,2123 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+void main() {
+  runApp(const TerangaAgroApp());
+}
+
+class TerangaAgroApp extends StatelessWidget {
+  const TerangaAgroApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'TerangaAgro',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
+      ),
+      home: const AuthScreen(),
+    );
+  }
+}
+
+/// =====================================================
+/// MODELE PRODUIT
+/// =====================================================
+class Product {
+  final String name;
+  final String price;
+  final String oldPrice;
+  final String? imageAsset;
+  final String? imageUrl;
+  final String producer;
+  final double rating;
+  final int orders;
+  final String moq;
+  final bool verified;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+
+  const Product({
+    required this.name,
+    required this.price,
+    required this.oldPrice,
+    this.imageAsset,
+    this.imageUrl,
+    required this.producer,
+    required this.rating,
+    required this.orders,
+    required this.moq,
+    this.verified = true,
+    this.fallbackIcon = Icons.eco,
+    this.fallbackColor = const Color(0xFFDCE8D0),
+  });
+}
+
+final List<Product> demoProducts = [
+  Product(
+    name: 'Tomates fraîches',
+    price: '500 FCFA/kg',
+    oldPrice: '650 FCFA/kg',
+    imageUrl: 'https://images.pexels.com/photos/10112127/pexels-photo-10112127.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Ferme Ndiaye',
+    rating: 4.6,
+    orders: 128,
+    moq: 'MOQ : 10 kg',
+    fallbackIcon: Icons.circle,
+    fallbackColor: const Color(0xFFE7B9A8),
+  ),
+  Product(
+    name: 'Oignons locaux',
+    price: '350 FCFA/kg',
+    oldPrice: '400 FCFA/kg',
+    imageUrl: 'https://images.pexels.com/photos/10159434/pexels-photo-10159434.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Coopérative Saint-Louis',
+    rating: 4.3,
+    orders: 89,
+    moq: 'MOQ : 20 kg',
+    fallbackIcon: Icons.circle,
+    fallbackColor: const Color(0xFFDCC9A3),
+  ),
+  Product(
+    name: 'Mangues Kent',
+    price: '800 FCFA/kg',
+    oldPrice: '950 FCFA/kg',
+    imageUrl: 'https://images.pexels.com/photos/7543137/pexels-photo-7543137.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Verger Diallo',
+    rating: 4.8,
+    orders: 210,
+    moq: 'MOQ : 5 kg',
+    fallbackIcon: Icons.circle,
+    fallbackColor: const Color(0xFFF0CE7C),
+  ),
+  Product(
+    name: 'Riz local',
+    price: '15000 FCFA/sac',
+    oldPrice: '17000 FCFA/sac',
+    imageUrl: 'https://images.pexels.com/photos/5472000/pexels-photo-5472000.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Riziculteurs du Fleuve',
+    rating: 4.5,
+    orders: 302,
+    moq: 'MOQ : 1 sac',
+    fallbackIcon: Icons.grass,
+    fallbackColor: const Color(0xFFE6DCC0),
+  ),
+  Product(
+    name: 'Piment frais',
+    price: '1200 FCFA/kg',
+    oldPrice: '1400 FCFA/kg',
+    imageUrl: 'https://images.pexels.com/photos/10899602/pexels-photo-10899602.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Ferme Sow',
+    rating: 4.2,
+    orders: 54,
+    moq: 'MOQ : 2 kg',
+    verified: false,
+    fallbackIcon: Icons.local_fire_department,
+    fallbackColor: const Color(0xFFDDA298),
+  ),
+  Product(
+    name: 'Poulet fermier',
+    price: '4500 FCFA',
+    oldPrice: '5200 FCFA',
+    imageUrl: 'https://images.pexels.com/photos/17725978/pexels-photo-17725978.jpeg?auto=compress&cs=tinysrgb&w=600',
+    producer: 'Élevage Ba',
+    rating: 4.7,
+    orders: 176,
+    moq: 'MOQ : 1 unité',
+    fallbackIcon: Icons.pets,
+    fallbackColor: const Color(0xFFE9D9BE),
+  ),
+];
+
+/// Widget d'image produit : affiche la vraie photo (assets/images/...) si
+/// disponible, sinon une vignette de secours colorée avec une icône —
+/// jamais de photo générique aléatoire non liée au produit.
+class RealProductImage extends StatelessWidget {
+  final Product product;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+  final BorderRadius? borderRadius;
+
+  const RealProductImage({
+    super.key,
+    required this.product,
+    this.width,
+    this.height,
+    this.fit = BoxFit.cover,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget fallback = Container(
+      width: width,
+      height: height,
+      color: product.fallbackColor,
+      child: Icon(product.fallbackIcon, color: Colors.black45, size: (height ?? 80) * 0.35),
+    );
+
+    Widget content;
+    if (product.imageUrl != null) {
+      content = Image.network(
+        product.imageUrl!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => fallback,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: width,
+            height: height,
+            color: product.fallbackColor.withValues(alpha: 0.4),
+            child: const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))),
+          );
+        },
+      );
+    } else if (product.imageAsset != null) {
+      content = Image.asset(
+        product.imageAsset!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) => fallback,
+      );
+    } else {
+      content = fallback;
+    }
+
+    if (borderRadius != null) {
+      return ClipRRect(borderRadius: borderRadius!, child: content);
+    }
+    return content;
+  }
+}
+
+/// =====================================================
+/// LOGO DE L'APPLICATION
+/// =====================================================
+class TerangaAgroLogo extends StatelessWidget {
+  final double size;
+  const TerangaAgroLogo({super.key, this.size = 32});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF66BB6A), Color(0xFF1B5E20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Icon(Icons.eco_rounded, color: Colors.white, size: size * 0.6),
+        ),
+        const SizedBox(width: 8),
+        const Text('TerangaAgro', style: TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+/// =====================================================
+/// NUMERO DE CONTACT
+/// =====================================================
+const String contactTelephone = '781153736';
+
+Future<void> copierNumero(BuildContext context, String numero) async {
+  await Clipboard.setData(ClipboardData(text: numero));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Numéro $numero copié — colle-le dans ton app d\'appel')),
+    );
+  }
+}
+
+Future<void> partagerProduit(BuildContext context, Product product) async {
+  final texte = 'Découvre ${product.name} à ${product.price} sur TerangaAgro, chez ${product.producer} !';
+  await Clipboard.setData(ClipboardData(text: texte));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Lien produit copié — colle-le où tu veux le partager')),
+    );
+  }
+}
+
+/// =====================================================
+/// FAVORIS (état partagé dans toute l'app)
+/// =====================================================
+class FavoritesStore extends ChangeNotifier {
+  FavoritesStore._();
+  static final FavoritesStore instance = FavoritesStore._();
+
+  final Set<String> _favorites = {};
+
+  bool isFavorite(String productName) => _favorites.contains(productName);
+
+  void toggle(String productName) {
+    if (_favorites.contains(productName)) {
+      _favorites.remove(productName);
+    } else {
+      _favorites.add(productName);
+    }
+    notifyListeners();
+  }
+
+  List<String> get all => _favorites.toList();
+}
+
+/// =====================================================
+/// AVIS CLIENTS (démo)
+/// =====================================================
+class Avis {
+  final String nom;
+  final double note;
+  final String commentaire;
+  const Avis(this.nom, this.note, this.commentaire);
+}
+
+const List<Avis> avisDemo = [
+  Avis('Fatou D.', 5, 'Produit très frais, livré rapidement. Je recommande.'),
+  Avis('Moussa S.', 4, 'Bon rapport qualité-prix, direct du producteur.'),
+  Avis('Aïssatou N.', 5, 'Meilleur prix que sur le marché, et pas d\'intermédiaire.'),
+  Avis('Ibrahima K.', 3, 'Correct, mais la quantité livrée était un peu juste.'),
+];
+
+double moyenneAvis(List<Avis> avis) =>
+    avis.isEmpty ? 0 : avis.map((a) => a.note).reduce((a, b) => a + b) / avis.length;
+
+/// =====================================================
+/// OPTIONS DE LIVRAISON
+/// =====================================================
+class DeliveryOption {
+  final String label;
+  final String detail;
+  const DeliveryOption(this.label, this.detail);
+}
+
+const List<DeliveryOption> deliveryOptions = [
+  DeliveryOption('Retrait chez le producteur', 'Gratuit'),
+  DeliveryOption('Point relais (Dakar / Saint-Louis)', '+500 FCFA'),
+  DeliveryOption('Livraison à domicile', '+1500 FCFA'),
+];
+
+/// =====================================================
+/// MOYENS DE PAIEMENT
+/// =====================================================
+class PaymentMethod {
+  final String name;
+  final Color color;
+  final IconData icon;
+  final String description;
+
+  const PaymentMethod({
+    required this.name,
+    required this.color,
+    required this.icon,
+    required this.description,
+  });
+}
+
+const List<PaymentMethod> paymentMethods = [
+  PaymentMethod(
+    name: 'Orange Money',
+    color: Color(0xFFFF7900),
+    icon: Icons.account_balance_wallet,
+    description: 'Paiement mobile Orange',
+  ),
+  PaymentMethod(
+    name: 'Wave',
+    color: Color(0xFF1DC8E9),
+    icon: Icons.waves,
+    description: 'Paiement mobile Wave',
+  ),
+  PaymentMethod(
+    name: 'Free Money',
+    color: Color(0xFFE30613),
+    icon: Icons.payments,
+    description: 'Paiement mobile Free',
+  ),
+];
+
+/// Petit badge représentant un moyen de paiement (icône + nom, couleurs de marque)
+class PaymentBadge extends StatelessWidget {
+  final PaymentMethod method;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const PaymentBadge({
+    super.key,
+    required this.method,
+    this.selected = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: method.color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? method.color : Colors.grey.shade300,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: method.color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(method.icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    method.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  Text(
+                    method.description,
+                    style: TextStyle(
+                        fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+              color: selected ? method.color : Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// =====================================================
+/// SESSION UTILISATEUR (connexion / inscription)
+/// =====================================================
+class UserSession extends ChangeNotifier {
+  UserSession._();
+  static final UserSession instance = UserSession._();
+
+  String? nom;
+  String? telephone;
+  String role = 'Acheteur'; // 'Acheteur' ou 'Producteur'
+
+  bool get isLoggedIn => nom != null && nom!.isNotEmpty;
+
+  void login({required String nom, required String telephone, required String role}) {
+    this.nom = nom;
+    this.telephone = telephone;
+    this.role = role;
+    notifyListeners();
+  }
+
+  void logout() {
+    nom = null;
+    telephone = null;
+    notifyListeners();
+  }
+}
+
+/// =====================================================
+/// ECRAN DE CONNEXION / INSCRIPTION
+/// =====================================================
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  bool _inscription = false;
+  String _role = 'Acheteur';
+  final _nomCtrl = TextEditingController();
+  final _telCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+
+  void _valider() {
+    final nom = _nomCtrl.text.trim();
+    final tel = _telCtrl.text.trim();
+    if (nom.isEmpty || tel.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Remplis ton nom et ton numéro de téléphone.')),
+      );
+      return;
+    }
+    UserSession.instance.login(nom: nom, telephone: tel, role: _role);
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeShell()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F8F1),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(colors: [Color(0xFF66BB6A), Color(0xFF1B5E20)]),
+                  ),
+                  child: const Icon(Icons.eco_rounded, color: Colors.white, size: 40),
+                ),
+                const SizedBox(height: 12),
+                const Text('TerangaAgro', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  _inscription ? 'Créer un compte' : 'Se connecter à votre compte',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 28),
+
+                // Choix du rôle
+                Row(
+                  children: [
+                    Expanded(
+                      child: _RoleChip(
+                        label: 'Acheteur',
+                        icon: Icons.shopping_basket_outlined,
+                        selected: _role == 'Acheteur',
+                        onTap: () => setState(() => _role = 'Acheteur'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _RoleChip(
+                        label: 'Producteur',
+                        icon: Icons.agriculture_outlined,
+                        selected: _role == 'Producteur',
+                        onTap: () => setState(() => _role = 'Producteur'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: _nomCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Nom complet',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _telCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Numéro de téléphone',
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _passCtrl,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Mot de passe',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), padding: const EdgeInsets.symmetric(vertical: 14)),
+                    onPressed: _valider,
+                    child: Text(_inscription ? 'Créer mon compte' : 'Se connecter'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextButton(
+                  onPressed: () => setState(() => _inscription = !_inscription),
+                  child: Text(
+                    _inscription
+                        ? 'Déjà un compte ? Se connecter'
+                        : 'Pas encore de compte ? S\'inscrire',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _RoleChip({required this.label, required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF2E7D32) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: selected ? const Color(0xFF2E7D32) : Colors.grey.shade300, width: selected ? 2 : 1),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: selected ? Colors.white : Colors.grey.shade700),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: selected ? Colors.white : Colors.grey.shade800, fontWeight: FontWeight.w600, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeShell extends StatefulWidget {
+  const HomeShell({super.key});
+
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  int _bottomIndex = 0;
+
+  final List<Widget> _pages = const [
+    AccueilPage(),
+    CategoriesPage(),
+    MessageriePage(),
+    PanierPage(),
+    MonTerangaAgroPage(),
+  ];
+
+  final List<String> _titles = const [
+    'Accueil',
+    'Catégories',
+    'Messagerie',
+    'Panier',
+    'Mon TerangaAgro',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _bottomIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _bottomIndex,
+        onDestinationSelected: (index) {
+          setState(() => _bottomIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Accueil',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.category_outlined),
+            selectedIcon: Icon(Icons.category),
+            label: 'Catégories',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Messagerie',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart),
+            label: 'Panier',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.eco_outlined),
+            selectedIcon: Icon(Icons.eco),
+            label: 'Mon TerangaAgro',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// =====================================================
+/// PAGE ACCUEIL : contient le TabBar du haut
+/// Produits | Producteurs | Mondial | Mode IA
+/// (Produits est maintenant le premier onglet affiché par défaut,
+/// Mode IA passe en dernier et n'est plus ce qu'on voit en arrivant)
+/// =====================================================
+class AccueilPage extends StatelessWidget {
+  const AccueilPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const TerangaAgroLogo(),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          bottom: const TabBar(
+            isScrollable: true,
+            tabs: [
+              Tab(icon: Icon(Icons.shopping_basket), text: 'Produits'),
+              Tab(icon: Icon(Icons.agriculture), text: 'Producteurs'),
+              Tab(icon: Icon(Icons.public), text: 'Mondial'),
+              Tab(icon: Icon(Icons.auto_awesome), text: 'Mode IA'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            ProduitsTab(),
+            ProducteursTab(),
+            MondialTab(),
+            ModeIATab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------------- ONGLET : MODE IA ----------------
+class _AiFeature {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+  const _AiFeature(this.title, this.description, this.icon, this.color);
+}
+
+const List<_AiFeature> _aiFeatures = [
+  _AiFeature(
+    'Tendances de votre marché',
+    'Visualisez l\'évolution des prix et de la demande sur vos produits.',
+    Icons.trending_up,
+    Color(0xFF5C7A4C),
+  ),
+  _AiFeature(
+    'Recherche de producteur vérifié',
+    'Trouvez rapidement des producteurs certifiés près de vous.',
+    Icons.verified_user_outlined,
+    Color(0xFF1B2340),
+  ),
+  _AiFeature(
+    'Concevoir avec IA',
+    'Générez des visuels ou des fiches produit assistés par IA.',
+    Icons.auto_fix_high,
+    Color(0xFFB5502E),
+  ),
+  _AiFeature(
+    'Recherche de produit',
+    'Décrivez ce que vous cherchez en langage naturel.',
+    Icons.search,
+    Color(0xFFD9A93E),
+  ),
+  _AiFeature(
+    'Analyser les best-sellers',
+    'Découvrez les produits qui se vendent le mieux en ce moment.',
+    Icons.leaderboard_outlined,
+    Color(0xFF5C7A4C),
+  ),
+  _AiFeature(
+    'Évaluer le potentiel du marché',
+    'Estimez la demande et la rentabilité avant de vous lancer.',
+    Icons.insights_outlined,
+    Color(0xFF1B2340),
+  ),
+  _AiFeature(
+    'Découvrir les tendances',
+    'Explorez les produits et catégories en forte croissance.',
+    Icons.explore_outlined,
+    Color(0xFFB5502E),
+  ),
+];
+
+class ModeIATab extends StatelessWidget {
+  const ModeIATab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 32, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Assistant IA TerangaAgro', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 3),
+                    Text('Choisissez un outil pour commencer', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.95,
+          ),
+          itemCount: _aiFeatures.length,
+          itemBuilder: (context, index) => _AiFeatureCard(feature: _aiFeatures[index]),
+        ),
+      ],
+    );
+  }
+}
+
+class _AiFeatureCard extends StatelessWidget {
+  final _AiFeature feature;
+  const _AiFeatureCard({required this.feature});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => AiFeatureDetailScreen(feature: feature)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: feature.color.withValues(alpha: 0.12), shape: BoxShape.circle),
+              child: Icon(feature.icon, color: feature.color, size: 20),
+            ),
+            const Spacer(),
+            Text(feature.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            Text(feature.description, style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600), maxLines: 3, overflow: TextOverflow.ellipsis),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AiFeatureDetailScreen extends StatelessWidget {
+  final _AiFeature feature;
+  const AiFeatureDetailScreen({super.key, required this.feature});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(feature.title)),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(feature.icon, size: 64, color: feature.color),
+            const SizedBox(height: 16),
+            Text(feature.title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(feature.description, style: const TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${feature.title} — fonctionnalité à connecter à un vrai modèle IA')),
+                );
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Essayer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------------- ONGLET : PRODUCTEURS ----------------
+class _ProducerCategory {
+  final String label;
+  final IconData icon;
+  const _ProducerCategory(this.label, this.icon);
+}
+
+const List<_ProducerCategory> _producerCategories = [
+  _ProducerCategory('Légumes', Icons.eco),
+  _ProducerCategory('Fruits', Icons.apple),
+  _ProducerCategory('Céréales', Icons.grass),
+  _ProducerCategory('Élevage', Icons.pets),
+];
+
+class _TopProducerEntry {
+  final String title;
+  final String badge;
+  final IconData icon;
+  final Color color;
+  const _TopProducerEntry(this.title, this.badge, this.icon, this.color);
+}
+
+final List<_TopProducerEntry> _topProducerEntries = [
+  const _TopProducerEntry('Les plus populaires', 'Légumes', Icons.eco, Color(0xFFE7B9A8)),
+  const _TopProducerEntry('Meilleures ventes', 'Céréales', Icons.grass, Color(0xFFE6DCC0)),
+  const _TopProducerEntry('Producteurs leaders', 'Fruits', Icons.apple, Color(0xFFF0CE7C)),
+  const _TopProducerEntry('Les plus vérifiés', 'Élevage', Icons.pets, Color(0xFFE9D9BE)),
+];
+
+class ProducteursTab extends StatefulWidget {
+  const ProducteursTab({super.key});
+
+  @override
+  State<ProducteursTab> createState() => _ProducteursTabState();
+}
+
+class _ProducteursTabState extends State<ProducteursTab> {
+  int _selectedCategory = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final producteurs = demoProducts.map((p) => p.producer).toSet().toList();
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 46,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.grey.shade600, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Rechercher un producteur',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Icon(Icons.search, color: Colors.white, size: 20),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _producerCategories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final cat = _producerCategories[index];
+              final selected = index == _selectedCategory;
+              return ChoiceChip(
+                selected: selected,
+                label: Text(cat.label),
+                avatar: Icon(cat.icon,
+                    size: 16,
+                    color: selected ? Colors.white : Colors.green.shade700),
+                labelStyle: TextStyle(
+                  color: selected ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                selectedColor: Colors.green.shade700,
+                backgroundColor: Colors.grey.shade100,
+                onSelected: (_) => setState(() => _selectedCategory = index),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.category_outlined,
+                  label: 'Explorer par catégories',
+                  color: Colors.orange.shade700,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.request_quote_outlined,
+                  label: 'Demander un devis',
+                  color: Colors.deepOrange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.verified_outlined,
+                  label: 'Producteur vérifié',
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Produits en vedette',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              Icon(Icons.arrow_forward, color: Colors.grey.shade700, size: 20),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 170,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: demoProducts.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final product = demoProducts[index];
+              return SizedBox(
+                width: 130,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RealProductImage(
+                      product: product,
+                      width: 130,
+                      height: 120,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Prix producteur :',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    Text(
+                      product.price,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Producteurs au top du classement',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 190,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _topProducerEntries.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final entry = _topProducerEntries[index];
+              return Container(
+                width: 130,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: double.infinity,
+                              color: entry.color,
+                              child: Icon(entry.icon, color: Colors.black45, size: 40),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            left: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black87,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'TOP',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      entry.badge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              _InfoPill(label: 'Livraison rapide'),
+              _InfoPill(label: 'Paiement sécurisé'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: const Text(
+            'Tous les producteurs',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...producteurs.map((nom) {
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.green.shade100,
+                child: const Icon(Icons.person, color: Colors.green),
+              ),
+              title: Text(nom),
+              subtitle: const Text('Producteur vérifié · Sénégal'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {},
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final String label;
+  const _InfoPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 13)),
+    );
+  }
+}
+
+/// ---------------- ONGLET : PRODUITS (avec vraies images) ----------------
+class ProduitsTab extends StatelessWidget {
+  const ProduitsTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.60,
+      ),
+      itemCount: demoProducts.length,
+      itemBuilder: (context, index) {
+        final product = demoProducts[index];
+        return ProductCard(product: product);
+      },
+    );
+  }
+}
+
+class ProductCard extends StatelessWidget {
+  final Product product;
+  const ProductCard({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  RealProductImage(product: product),
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade700,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'PROMO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: ListenableBuilder(
+                      listenable: FavoritesStore.instance,
+                      builder: (context, _) {
+                        final fav = FavoritesStore.instance.isFavorite(product.name);
+                        return GestureDetector(
+                          onTap: () => FavoritesStore.instance.toggle(product.name),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.white70,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(fav ? Icons.favorite : Icons.favorite_border,
+                                size: 16, color: fav ? Colors.redAccent : Colors.black54),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          product.price,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.deepOrange,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          product.oldPrice,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 10,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    product.moq,
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 13, color: Colors.amber.shade700),
+                      const SizedBox(width: 2),
+                      Text(
+                        product.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '· ${product.orders} commandes',
+                        style: TextStyle(
+                            fontSize: 10, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.producer,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 10, color: Colors.grey.shade700),
+                        ),
+                      ),
+                      if (product.verified)
+                        Container(
+                          margin: const EdgeInsets.only(left: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(color: Colors.green.shade300),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified,
+                                  size: 10, color: Colors.green.shade700),
+                              const SizedBox(width: 2),
+                              Text(
+                                'Vérifié',
+                                style: TextStyle(
+                                    fontSize: 9, color: Colors.green.shade800),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------------- PAGE DETAIL PRODUIT ----------------
+class ProductDetailScreen extends StatelessWidget {
+  final Product product;
+  const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final moyenne = moyenneAvis(avisDemo);
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 260,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            flexibleSpace: FlexibleSpaceBar(background: RealProductImage(product: product)),
+            actions: [
+              ListenableBuilder(
+                listenable: FavoritesStore.instance,
+                builder: (context, _) {
+                  final fav = FavoritesStore.instance.isFavorite(product.name);
+                  return IconButton(
+                    icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? Colors.redAccent : Colors.black87),
+                    onPressed: () => FavoritesStore.instance.toggle(product.name),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.share_outlined),
+                onPressed: () => partagerProduit(context, product),
+              ),
+              const SizedBox(width: 6),
+            ],
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: Text(product.name, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold))),
+                        Text(product.price, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(product.oldPrice, style: TextStyle(fontSize: 12, color: Colors.grey.shade500, decoration: TextDecoration.lineThrough)),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      ...List.generate(5, (i) => Icon(i < moyenne.round() ? Icons.star : Icons.star_border, size: 16, color: Colors.amber.shade700)),
+                      const SizedBox(width: 6),
+                      Text('${moyenne.toStringAsFixed(1)} (${avisDemo.length} avis) · ${product.orders} commandes', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ]),
+                    const SizedBox(height: 12),
+                    Wrap(spacing: 8, children: [
+                      Chip(label: Text(product.moq), backgroundColor: Colors.grey.shade100),
+                      Chip(avatar: const Icon(Icons.agriculture, size: 14), label: Text(product.producer), backgroundColor: Colors.grey.shade100),
+                      if (product.verified)
+                        Chip(avatar: Icon(Icons.verified, size: 14, color: Colors.green.shade700), label: const Text('Vérifié'), backgroundColor: Colors.green.shade50),
+                    ]),
+                    const SizedBox(height: 20),
+                    const Text('Description', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${product.name}, vendu directement par ${product.producer}. Achat sans intermédiaire, prix producteur garanti.',
+                      style: TextStyle(fontSize: 13.5, color: Colors.grey.shade800, height: 1.5),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Mode de livraison', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 4),
+                    ...deliveryOptions.map((opt) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.local_shipping_outlined),
+                      title: Text(opt.label, style: const TextStyle(fontSize: 13.5)),
+                      trailing: Text(opt.detail, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    )),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10)),
+                      child: Row(children: [
+                        const Icon(Icons.support_agent),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                            Text('Besoin d\'infos sur ce produit ?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            SizedBox(height: 2),
+                            Text(contactTelephone, style: TextStyle(fontSize: 12)),
+                          ]),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () => copierNumero(context, contactTelephone),
+                          icon: const Icon(Icons.copy, size: 16),
+                          label: const Text('Copier'),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Avis clients (${avisDemo.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 10),
+                    ...avisDemo.map((a) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          CircleAvatar(radius: 14, backgroundColor: Colors.grey.shade200, child: Text(a.nom[0], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                          const SizedBox(width: 8),
+                          Text(a.nom, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          const Spacer(),
+                          Row(children: List.generate(5, (i) => Icon(i < a.note ? Icons.star : Icons.star_border, size: 13, color: Colors.amber.shade700))),
+                        ]),
+                        const SizedBox(height: 6),
+                        Text(a.commentaire, style: TextStyle(fontSize: 12.5, color: Colors.grey.shade800)),
+                      ]),
+                    )),
+                    const SizedBox(height: 90),
+                  ],
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${product.name} ajouté au panier')),
+                );
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: Text('Ajouter au panier — ${product.price}'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------------- ONGLET : MONDIAL ----------------
+class MondialTab extends StatelessWidget {
+  const MondialTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final infos = [
+      {'pays': 'Sénégal', 'info': 'Prix moyen du riz en hausse de 3%'},
+      {'pays': 'Côte d\'Ivoire', 'info': 'Récolte de cacao record cette année'},
+      {'pays': 'Mali', 'info': 'Exportation de mangues en hausse'},
+      {'pays': 'International', 'info': 'Cours mondial du coton stable'},
+    ];
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: infos.length,
+      itemBuilder: (context, index) {
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          child: ListTile(
+            leading: const Icon(Icons.public, color: Colors.blue),
+            title: Text(infos[index]['pays']!),
+            subtitle: Text(infos[index]['info']!),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// =====================================================
+/// AUTRES PAGES DU BOTTOM NAVIGATION
+/// =====================================================
+class CategoriesPage extends StatelessWidget {
+  const CategoriesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = [
+      {'nom': 'Légumes', 'icone': Icons.eco},
+      {'nom': 'Fruits', 'icone': Icons.apple},
+      {'nom': 'Céréales', 'icone': Icons.grass},
+      {'nom': 'Viandes & Volailles', 'icone': Icons.set_meal},
+      {'nom': 'Élevage', 'icone': Icons.pets},
+      {'nom': 'Matériel agricole', 'icone': Icons.agriculture},
+    ];
+    return Scaffold(
+      appBar: AppBar(title: const Text('Catégories')),
+      body: GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.3,
+        ),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          return Card(
+            child: InkWell(
+              onTap: () {},
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(categories[index]['icone'] as IconData,
+                      size: 36, color: Colors.green),
+                  const SizedBox(height: 8),
+                  Text(categories[index]['nom'] as String),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class MessageriePage extends StatelessWidget {
+  const MessageriePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Messagerie')),
+      body: ListView.builder(
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: const CircleAvatar(child: Icon(Icons.person)),
+            title: Text('Producteur ${index + 1}'),
+            subtitle: const Text('Merci pour votre commande !'),
+            trailing: const Text('10:30'),
+            onTap: () {},
+          );
+        },
+      ),
+    );
+  }
+}
+
+class PanierPage extends StatefulWidget {
+  const PanierPage({super.key});
+
+  @override
+  State<PanierPage> createState() => _PanierPageState();
+}
+
+class _PanierPageState extends State<PanierPage> {
+  int _selectedPayment = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = demoProducts.length * 1000; // exemple simplifié
+    return Scaffold(
+      appBar: AppBar(title: const Text('Panier')),
+      body: ListView(
+        padding: const EdgeInsets.all(8),
+        children: [
+          ...demoProducts.map((product) {
+            return Card(
+              child: ListTile(
+                leading: RealProductImage(
+                  product: product,
+                  width: 56,
+                  height: 56,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                title: Text(product.name),
+                subtitle: Text('${product.price} · ${product.producer}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () {},
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'Choisissez votre moyen de paiement',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: List.generate(paymentMethods.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: PaymentBadge(
+                    method: paymentMethods[index],
+                    selected: _selectedPayment == index,
+                    onTap: () => setState(() => _selectedPayment = index),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Text(
+                'Total : $total FCFA',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Paiement via ${paymentMethods[_selectedPayment].name} en cours...',
+                      ),
+                      backgroundColor:
+                      paymentMethods[_selectedPayment].color,
+                    ),
+                  );
+                },
+                child: const Text('Payer maintenant'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MonTerangaAgroPage extends StatelessWidget {
+  const MonTerangaAgroPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mon TerangaAgro')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            color: Colors.red,
+            child: const Text(
+              'VERSION TEST — SI TU VOIS CE BANDEAU ROUGE, LE NOUVEAU CODE TOURNE',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const CircleAvatar(
+            radius: 40,
+            child: Icon(Icons.person, size: 40),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Text(
+              UserSession.instance.isLoggedIn
+                  ? 'Bienvenue, ${UserSession.instance.nom} (${UserSession.instance.role})'
+                  : 'Bienvenue sur TerangaAgro',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ListTile(
+            leading: const Icon(Icons.shopping_bag_outlined),
+            title: const Text('Mes commandes'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.favorite_border),
+            title: const Text('Mes favoris'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.dialpad, color: Colors.deepOrange),
+            title: const Text('Simuler le mode USSD'),
+            subtitle: const Text('Pour les zones à faible connectivité (*123#)'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const UssdSimulatorScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: const Text('Paramètres'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Aide & support'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Se déconnecter', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              UserSession.instance.logout();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// =====================================================
+/// SIMULATEUR USSD (*123#) — démonstration pour zones à
+/// faible connectivité. Ceci est une SIMULATION visuelle ;
+/// un vrai service USSD nécessite un serveur backend relié
+/// à un agrégateur télécom (ex: Africa's Talking, Orange API).
+/// =====================================================
+class UssdNode {
+  final String texte;
+  final Map<String, String> options; // touche -> clé du noeud suivant
+  final bool estFinal;
+  const UssdNode({required this.texte, this.options = const {}, this.estFinal = false});
+}
+
+final Map<String, UssdNode> ussdTree = {
+  'accueil': const UssdNode(
+    texte: 'TERANGAAGRO\n1. Consulter les prix\n2. Rechercher un produit\n3. Passer une commande\n4. Suivre ma commande\n5. Devenir producteur\n\n0. Quitter',
+    options: {
+      '1': 'prix',
+      '2': 'recherche',
+      '3': 'commande_produit',
+      '4': 'suivi',
+      '5': 'producteur',
+    },
+  ),
+  'prix': UssdNode(
+    texte: 'PRIX DU MARCHE\n${demoProducts.map((p) => '${p.name} : ${p.price}').join('\n')}\n\n0. Retour  00. Quitter',
+    options: const {},
+    estFinal: true,
+  ),
+  'recherche': const UssdNode(
+    texte: 'RECHERCHE PRODUIT\nTapez le numero :\n1. Tomates\n2. Oignons\n3. Mangues\n4. Riz\n5. Piment\n6. Poulet\n\n0. Retour',
+    options: {
+      '1': 'fiche_tomates',
+      '2': 'fiche_oignons',
+      '3': 'fiche_mangues',
+      '4': 'fiche_riz',
+      '5': 'fiche_piment',
+      '6': 'fiche_poulet',
+    },
+  ),
+  'fiche_tomates': UssdNode(texte: 'TOMATES FRAICHES\n${demoProducts[0].price}\nProducteur : ${demoProducts[0].producer}\nMOQ : ${demoProducts[0].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}, estFinal: false),
+  'fiche_oignons': UssdNode(texte: 'OIGNONS LOCAUX\n${demoProducts[1].price}\nProducteur : ${demoProducts[1].producer}\nMOQ : ${demoProducts[1].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}),
+  'fiche_mangues': UssdNode(texte: 'MANGUES KENT\n${demoProducts[2].price}\nProducteur : ${demoProducts[2].producer}\nMOQ : ${demoProducts[2].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}),
+  'fiche_riz': UssdNode(texte: 'RIZ LOCAL\n${demoProducts[3].price}\nProducteur : ${demoProducts[3].producer}\nMOQ : ${demoProducts[3].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}),
+  'fiche_piment': UssdNode(texte: 'PIMENT FRAIS\n${demoProducts[4].price}\nProducteur : ${demoProducts[4].producer}\nMOQ : ${demoProducts[4].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}),
+  'fiche_poulet': UssdNode(texte: 'POULET FERMIER\n${demoProducts[5].price}\nProducteur : ${demoProducts[5].producer}\nMOQ : ${demoProducts[5].moq}\n\n1. Commander\n0. Retour', options: const {'1': 'commande_ok'}),
+  'commande_produit': const UssdNode(
+    texte: 'PASSER COMMANDE\nChoisissez un produit :\n1. Tomates\n2. Oignons\n3. Mangues\n4. Riz\n5. Piment\n6. Poulet\n\n0. Retour',
+    options: {
+      '1': 'commande_ok', '2': 'commande_ok', '3': 'commande_ok',
+      '4': 'commande_ok', '5': 'commande_ok', '6': 'commande_ok',
+    },
+  ),
+  'commande_ok': const UssdNode(
+    texte: 'COMMANDE ENREGISTREE\nUn agent TerangaAgro vous contactera pour confirmer la quantite et le paiement (Orange Money / Wave / Free Money).\n\nReference : CMD-USSD-0472\n\n0. Menu principal  00. Quitter',
+    options: {'0': 'accueil'},
+    estFinal: true,
+  ),
+  'suivi': const UssdNode(
+    texte: 'SUIVI DE COMMANDE\nCMD-USSD-0472\nStatut : EN LIVRAISON\nZone : Thies\n\n0. Retour  00. Quitter',
+    options: {},
+    estFinal: true,
+  ),
+  'producteur': const UssdNode(
+    texte: 'DEVENIR PRODUCTEUR\nEnvoyez par SMS :\nNOM*PRODUIT*QUANTITE*PRIX\nau 15155 (gratuit)\n\nExemple :\nNDIAYE*OIGNONS*300KG*275FCFA\n\n0. Retour  00. Quitter',
+    options: {},
+    estFinal: true,
+  ),
+};
+
+class UssdSimulatorScreen extends StatefulWidget {
+  const UssdSimulatorScreen({super.key});
+
+  @override
+  State<UssdSimulatorScreen> createState() => _UssdSimulatorScreenState();
+}
+
+class _UssdSimulatorScreenState extends State<UssdSimulatorScreen> {
+  bool _appelEnCours = false;
+  String _nodeKey = 'accueil';
+  final List<String> _historique = [];
+  final _inputCtrl = TextEditingController();
+
+  void _composer() => setState(() => _appelEnCours = true);
+
+  void _envoyer() {
+    final saisie = _inputCtrl.text.trim();
+    _inputCtrl.clear();
+    if (saisie.isEmpty) return;
+
+    if (saisie == '00') {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (saisie == '0') {
+      setState(() {
+        if (_historique.isNotEmpty) {
+          _nodeKey = _historique.removeLast();
+        } else {
+          _nodeKey = 'accueil';
+        }
+      });
+      return;
+    }
+
+    final node = ussdTree[_nodeKey]!;
+    final suivant = node.options[saisie];
+    if (suivant != null) {
+      setState(() {
+        _historique.add(_nodeKey);
+        _nodeKey = suivant;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Simulation USSD'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: _appelEnCours ? _buildEcranUssd() : _buildEcranComposition(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEcranComposition() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Aucune donnée mobile requise —\nfonctionne en 2G simple',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 30),
+        const Text(
+          '*123#',
+          style: TextStyle(color: Colors.white, fontSize: 42, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 30),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
+          onPressed: _composer,
+          icon: const Icon(Icons.call),
+          label: const Text('Composer'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEcranUssd() {
+    final node = ussdTree[_nodeKey]!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1a1a1a),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Text(
+            node.texte,
+            style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13, height: 1.5),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _inputCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Reponse',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: const Color(0xFF1a1a1a),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
+                ),
+                onSubmitted: (_) => _envoyer(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: _envoyer,
+              child: const Text('Envoyer'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
